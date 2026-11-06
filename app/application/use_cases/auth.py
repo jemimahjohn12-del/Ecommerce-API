@@ -35,4 +35,4 @@ class LoginUser:
         if not user or not user.is_active or not self.hasher.verify(password, user.hashed_password):
             # Same message for both cases so attackers can't tell which emails exist
             raise InvalidCredentials("Incorrect email or password")
-        return self.tokens.create_access_token(user.id, user.role.value)s
+        return self.tokens.create_access_token(user.id, user.role.value)
