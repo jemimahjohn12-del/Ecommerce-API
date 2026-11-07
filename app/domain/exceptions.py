@@ -16,3 +16,19 @@ class NotFound(DomainError):
 
 class PermissionDenied(DomainError):
     pass
+
+
+class SkuAlreadyExists(DomainError):
+    pass
+
+
+class CategoryAlreadyExists(DomainError):
+    pass
+
+
+class CategoryInUse(DomainError):
+    pass
+
+
+class InvalidData(DomainError):
+    pass

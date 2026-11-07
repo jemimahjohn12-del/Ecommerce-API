@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from app.domain.entities import Role, User
 from app.domain.exceptions import InvalidCredentials
 from app.infrastructure.database import SessionLocal
+from app.infrastructure.repositories.category_repository import SqlAlchemyCategoryRepository
+from app.infrastructure.repositories.product_repository import SqlAlchemyProductRepository
 from app.infrastructure.repositories.user_repository import SqlAlchemyUserRepository
 from app.infrastructure.security import BcryptPasswordHasher, JWTTokenService
 
@@ -21,6 +23,14 @@ def get_db():
 
 def get_user_repo(db: Session = Depends(get_db)) -> SqlAlchemyUserRepository:
     return SqlAlchemyUserRepository(db)
+
+
+def get_category_repo(db: Session = Depends(get_db)) -> SqlAlchemyCategoryRepository:
+    return SqlAlchemyCategoryRepository(db)
+
+
+def get_product_repo(db: Session = Depends(get_db)) -> SqlAlchemyProductRepository:
+    return SqlAlchemyProductRepository(db)
 
 
 def get_hasher() -> BcryptPasswordHasher:
