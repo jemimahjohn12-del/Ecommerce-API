@@ -67,3 +67,28 @@ class CartItemModel(Base):
     cart_id: Mapped[int] = mapped_column(ForeignKey("carts.id", ondelete="CASCADE"), index=True)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
     quantity: Mapped[int] = mapped_column(Integer)
+    
+
+class CouponModel(Base):
+    __tablename__ = "coupons"
+    __table_args__ = (
+        CheckConstraint("discount_value > 0", name="ck_coupons_value_positive"),
+        CheckConstraint(
+            "discount_type <> 'PERCENTAGE' OR discount_value <= 100",
+            name="ck_coupons_percentage_max_100",
+        ),
+        CheckConstraint("max_uses >= 1", name="ck_coupons_max_uses_positive"),
+        CheckConstraint("min_order_amount >= 0", name="ck_coupons_min_order_non_negative"),
+        CheckConstraint("times_used >= 0", name="ck_coupons_times_used_non_negative"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    code: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    discount_type: Mapped[str] = mapped_column(String(20))
+    discount_value: Mapped[Decimal] = mapped_column(Numeric(10, 2))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    max_uses: Mapped[int] = mapped_column(Integer)
+    min_order_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=Decimal("0.00"))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    times_used: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

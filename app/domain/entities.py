@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
 
-from app.domain.exceptions import InvalidData
+from app.domain.exceptions import CouponNotValid, InvalidData
 
 
 class Role(str, Enum):
@@ -83,3 +83,55 @@ class Cart:
     @property
     def item_count(self) -> int:
         return sum(item.quantity for item in self.items)
+    
+
+class DiscountType(str, Enum):
+    PERCENTAGE = "PERCENTAGE"
+    FIXED = "FIXED"
+
+
+@dataclass
+class Coupon:
+    id: int | None
+    code: str
+    discount_type: DiscountType
+    discount_value: Decimal
+    expires_at: datetime
+    max_uses: int
+    min_order_amount: Decimal = Decimal("0.00")
+    is_active: bool = True
+    times_used: int = 0
+    created_at: datetime | None = None
+
+    def __post_init__(self):
+        self.validate()
+
+    def validate(self) -> None:
+        if self.discount_value <= 0:
+            raise InvalidData("Discount value must be greater than 0")
+        if self.discount_type == DiscountType.PERCENTAGE and self.discount_value > 100:
+            raise InvalidData("Percentage discount must be between 0 and 100")
+        if self.max_uses < 1:
+            raise InvalidData("Maximum usage limit must be at least 1")
+        if self.min_order_amount < 0:
+            raise InvalidData("Minimum order amount cannot be negative")
+
+    def check_usable(self, order_total: Decimal, now: datetime) -> None:
+        if not self.is_active:
+            raise CouponNotValid("This coupon is inactive")
+        if now >= self.expires_at:
+            raise CouponNotValid("This coupon has expired")
+        if self.times_used >= self.max_uses:
+            raise CouponNotValid("This coupon has reached its usage limit")
+        if order_total < self.min_order_amount:
+            raise CouponNotValid(f"Minimum order amount for this coupon is {self.min_order_amount}")
+
+    def calculate_discount(self, order_total: Decimal) -> Decimal:
+        if self.discount_type == DiscountType.PERCENTAGE:
+            discount = (order_total * self.discount_value / 100).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
+        else:
+            discount = self.discount_value
+        # The final total must never be negative
+        return min(discount, order_total)

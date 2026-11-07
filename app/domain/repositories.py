@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from decimal import Decimal
 
-from app.domain.entities import Cart, Category, Product, User
+from app.domain.entities import Cart, Category, Coupon, Product, User
 
 
 class UserRepository(ABC):
@@ -87,3 +87,20 @@ class CartRepository(ABC):
 
     @abstractmethod
     def clear(self, user_id: int) -> None: ...
+    
+
+class CouponRepository(ABC):
+    @abstractmethod
+    def get_by_id(self, coupon_id: int) -> Coupon | None: ...
+
+    @abstractmethod
+    def get_by_code(self, code: str) -> Coupon | None: ...
+
+    @abstractmethod
+    def list_all(self) -> list[Coupon]: ...
+
+    @abstractmethod
+    def add(self, coupon: Coupon) -> Coupon: ...
+
+    @abstractmethod
+    def update(self, coupon: Coupon) -> Coupon: ...

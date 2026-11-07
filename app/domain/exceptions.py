@@ -26,6 +26,13 @@ class CategoryAlreadyExists(DomainError):
     pass
 
 
+class CouponAlreadyExists(DomainError):
+    pass
+
+
+class CouponNotValid(DomainError):
+    pass
+
 class CategoryInUse(DomainError):
     pass
 

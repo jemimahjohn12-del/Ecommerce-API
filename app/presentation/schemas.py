@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
+from app.domain.entities import DiscountType
 
 # ---------- Auth ----------
 class RegisterRequest(BaseModel):
@@ -119,3 +120,60 @@ class CartResponse(BaseModel):
     items: list[CartItemResponse]
     item_count: int
     total: Decimal
+    
+
+# ---------- Coupons ----------
+def _as_utc(value: datetime | None) -> datetime | None:
+    # A date sent without a time zone is treated as UTC
+    if value is not None and value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value
+
+
+class CouponCreate(BaseModel):
+    code: str = Field(min_length=3, max_length=50)
+    discount_type: DiscountType
+    discount_value: Decimal = Field(gt=0, max_digits=10, decimal_places=2)
+    expires_at: datetime
+    max_uses: int = Field(ge=1)
+    min_order_amount: Decimal = Field(default=Decimal("0.00"), ge=0, max_digits=10, decimal_places=2)
+    is_active: bool = True
+
+    _utc = field_validator("expires_at")(_as_utc)
+
+
+class CouponUpdate(BaseModel):
+    discount_type: DiscountType | None = None
+    discount_value: Decimal | None = Field(default=None, gt=0, max_digits=10, decimal_places=2)
+    expires_at: datetime | None = None
+    max_uses: int | None = Field(default=None, ge=1)
+    min_order_amount: Decimal | None = Field(default=None, ge=0, max_digits=10, decimal_places=2)
+    is_active: bool | None = None
+
+    _utc = field_validator("expires_at")(_as_utc)
+
+
+class CouponResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    code: str
+    discount_type: DiscountType
+    discount_value: Decimal
+    expires_at: datetime
+    max_uses: int
+    times_used: int
+    min_order_amount: Decimal
+    is_active: bool
+    created_at: datetime
+
+
+class ApplyCouponRequest(BaseModel):
+    code: str = Field(min_length=1, max_length=50)
+
+
+class AppliedCouponResponse(BaseModel):
+    code: str
+    subtotal: Decimal
+    discount: Decimal
+    final_total: Decimal
