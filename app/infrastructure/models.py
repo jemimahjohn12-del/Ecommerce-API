@@ -2,13 +2,12 @@ from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import (
-    Boolean, CheckConstraint, DateTime, ForeignKey, Integer, Numeric, String, Text, func,
+    Boolean, CheckConstraint, DateTime, ForeignKey, Integer, Numeric, String, Text,
+    UniqueConstraint, func,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.infrastructure.database import Base
-
-
 class UserModel(Base):
     __tablename__ = "users"
 
@@ -46,3 +45,25 @@ class ProductModel(Base):
     category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"), index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    
+
+class CartModel(Base):
+    __tablename__ = "carts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # unique=True => one cart per user, enforced by the database
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class CartItemModel(Base):
+    __tablename__ = "cart_items"
+    __table_args__ = (
+        UniqueConstraint("cart_id", "product_id", name="uq_cart_items_cart_product"),
+        CheckConstraint("quantity > 0", name="ck_cart_items_quantity_positive"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    cart_id: Mapped[int] = mapped_column(ForeignKey("carts.id", ondelete="CASCADE"), index=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
+    quantity: Mapped[int] = mapped_column(Integer)

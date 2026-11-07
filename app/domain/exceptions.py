@@ -32,3 +32,7 @@ class CategoryInUse(DomainError):
 
 class InvalidData(DomainError):
     pass
+
+
+class InsufficientStock(DomainError):
+    pass

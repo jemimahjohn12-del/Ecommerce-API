@@ -90,3 +90,32 @@ class PaginatedProducts(BaseModel):
     page: int
     page_size: int
     total_pages: int
+    
+
+# ---------- Cart ----------
+class AddToCartRequest(BaseModel):
+    product_id: int = Field(ge=1)
+    quantity: int = Field(default=1, ge=1, le=1000)
+
+
+class UpdateCartItemRequest(BaseModel):
+    quantity: int = Field(ge=1, le=1000)
+
+
+class CartItemResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    product_id: int
+    product_name: str
+    unit_price: Decimal
+    quantity: int
+    line_total: Decimal
+    is_available: bool
+
+
+class CartResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    items: list[CartItemResponse]
+    item_count: int
+    total: Decimal

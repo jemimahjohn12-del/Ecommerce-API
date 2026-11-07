@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from decimal import Decimal
 
-from app.domain.entities import Category, Product, User
+from app.domain.entities import Cart, Category, Product, User
 
 
 class UserRepository(ABC):
@@ -68,3 +68,22 @@ class ProductRepository(ABC):
 
     @abstractmethod
     def update(self, product: Product) -> Product: ...
+    
+
+class CartRepository(ABC):
+    @abstractmethod
+    def get_cart(self, user_id: int) -> Cart:
+        """Return the user's cart, creating an empty one if needed."""
+
+    @abstractmethod
+    def get_item_quantity(self, user_id: int, product_id: int) -> int | None: ...
+
+    @abstractmethod
+    def set_item_quantity(self, user_id: int, product_id: int, quantity: int) -> None:
+        """Insert the item, or update its quantity if it is already in the cart."""
+
+    @abstractmethod
+    def remove_item(self, user_id: int, product_id: int) -> bool: ...
+
+    @abstractmethod
+    def clear(self, user_id: int) -> None: ...

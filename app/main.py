@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.domain import exceptions as errors
-from app.presentation.routes import auth, categories, products
+from app.presentation.routes import auth, cart, categories, products
 
 app = FastAPI(title="E-Commerce & Order Management API")
 
@@ -12,6 +12,7 @@ STATUS_BY_ERROR = {
     errors.SkuAlreadyExists: 409,
     errors.CategoryAlreadyExists: 409,
     errors.CategoryInUse: 409,
+    errors.InsufficientStock: 409,
     errors.InvalidCredentials: 401,
     errors.PermissionDenied: 403,
     errors.InvalidData: 400,
@@ -27,6 +28,7 @@ async def domain_error_handler(request: Request, error: errors.DomainError):
 app.include_router(auth.router)
 app.include_router(categories.router)
 app.include_router(products.router)
+app.include_router(cart.router)
 
 
 @app.get("/", tags=["Health"])

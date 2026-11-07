@@ -9,6 +9,7 @@ from app.infrastructure.repositories.category_repository import SqlAlchemyCatego
 from app.infrastructure.repositories.product_repository import SqlAlchemyProductRepository
 from app.infrastructure.repositories.user_repository import SqlAlchemyUserRepository
 from app.infrastructure.security import BcryptPasswordHasher, JWTTokenService
+from app.infrastructure.repositories.cart_repository import SqlAlchemyCartRepository
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -31,6 +32,9 @@ def get_category_repo(db: Session = Depends(get_db)) -> SqlAlchemyCategoryReposi
 
 def get_product_repo(db: Session = Depends(get_db)) -> SqlAlchemyProductRepository:
     return SqlAlchemyProductRepository(db)
+
+def get_cart_repo(db: Session = Depends(get_db)) -> SqlAlchemyCartRepository:
+    return SqlAlchemyCartRepository(db)
 
 
 def get_hasher() -> BcryptPasswordHasher:
