@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
-from app.domain.entities import DiscountType
+from app.domain.entities import DiscountType, OrderStatus
 
 # ---------- Auth ----------
 class RegisterRequest(BaseModel):
@@ -177,3 +177,44 @@ class AppliedCouponResponse(BaseModel):
     subtotal: Decimal
     discount: Decimal
     final_total: Decimal
+    
+
+# ---------- Orders ----------
+class CheckoutRequest(BaseModel):
+    coupon_code: str | None = Field(default=None, min_length=1, max_length=50)
+
+
+class OrderItemResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    product_id: int
+    product_name: str
+    unit_price: Decimal
+    quantity: int
+    line_total: Decimal
+
+
+class OrderResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    status: OrderStatus
+    items: list[OrderItemResponse]
+    subtotal: Decimal
+    discount: Decimal
+    total: Decimal
+    coupon_code: str | None
+    created_at: datetime
+
+
+class PaginatedOrders(BaseModel):
+    items: list[OrderResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+class UpdateOrderStatusRequest(BaseModel):
+    status: OrderStatus

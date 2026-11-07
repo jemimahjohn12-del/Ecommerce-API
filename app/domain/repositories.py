@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from decimal import Decimal
 
-from app.domain.entities import Cart, Category, Coupon, Product, User
+from app.domain.entities import Cart, Category, Coupon, Order, OrderStatus, Product, User
 
 
 class UserRepository(ABC):
@@ -104,3 +104,18 @@ class CouponRepository(ABC):
 
     @abstractmethod
     def update(self, coupon: Coupon) -> Coupon: ...
+    
+
+class OrderRepository(ABC):
+    """Read side for orders. Writing happens through OrderUnitOfWork."""
+
+    @abstractmethod
+    def get_by_id(self, order_id: int) -> Order | None: ...
+
+    @abstractmethod
+    def list_for_user(self, user_id: int, page: int, page_size: int) -> tuple[list[Order], int]: ...
+
+    @abstractmethod
+    def list_all(
+        self, status: OrderStatus | None, page: int, page_size: int
+    ) -> tuple[list[Order], int]: ...

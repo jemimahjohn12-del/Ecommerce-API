@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.domain import exceptions as errors
-from app.presentation.routes import auth, cart, categories, coupons, products
+from app.presentation.routes import auth, cart, categories, coupons, orders, products
 
 app = FastAPI(title="E-Commerce & Order Management API")
 
@@ -14,6 +14,7 @@ STATUS_BY_ERROR = {
     errors.CategoryInUse: 409,
     errors.CouponAlreadyExists: 409,
     errors.InsufficientStock: 409,
+    errors.InvalidStatusTransition: 409,
     errors.CouponNotValid: 400,
     errors.InvalidCredentials: 401,
     errors.PermissionDenied: 403,
@@ -32,6 +33,7 @@ app.include_router(categories.router)
 app.include_router(products.router)
 app.include_router(cart.router)
 app.include_router(coupons.router)
+app.include_router(orders.router)
 
 
 @app.get("/", tags=["Health"])

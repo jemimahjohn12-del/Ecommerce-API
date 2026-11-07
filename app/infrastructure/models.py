@@ -92,3 +92,55 @@ class CouponModel(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     times_used: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    
+
+class OrderModel(Base):
+    __tablename__ = "orders"
+    __table_args__ = (
+        CheckConstraint("total >= 0", name="ck_orders_total_non_negative"),
+        CheckConstraint("discount >= 0", name="ck_orders_discount_non_negative"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    status: Mapped[str] = mapped_column(String(20), default="PENDING", index=True)
+    subtotal: Mapped[Decimal] = mapped_column(Numeric(10, 2))
+    discount: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=Decimal("0.00"))
+    total: Mapped[Decimal] = mapped_column(Numeric(10, 2))
+    coupon_code: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class OrderItemModel(Base):
+    __tablename__ = "order_items"
+    __table_args__ = (CheckConstraint("quantity > 0", name="ck_order_items_quantity_positive"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"), index=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
+    product_name: Mapped[str] = mapped_column(String(255))  # snapshot
+    unit_price: Mapped[Decimal] = mapped_column(Numeric(10, 2))  # snapshot
+    quantity: Mapped[int] = mapped_column(Integer)
+
+
+class CouponUsageModel(Base):
+    __tablename__ = "coupon_usages"
+    __table_args__ = (UniqueConstraint("order_id", name="uq_coupon_usages_order"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    coupon_id: Mapped[int] = mapped_column(ForeignKey("coupons.id"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class IdempotencyKeyModel(Base):
+    __tablename__ = "idempotency_keys"
+    # The database itself refuses a second order for the same user and key
+    __table_args__ = (UniqueConstraint("user_id", "key", name="uq_idempotency_user_key"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    key: Mapped[str] = mapped_column(String(100))
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

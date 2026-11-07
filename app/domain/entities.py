@@ -3,8 +3,7 @@ from datetime import datetime
 from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
 
-from app.domain.exceptions import CouponNotValid, InvalidData
-
+from app.domain.exceptions import CouponNotValid, InvalidData, InvalidStatusTransition
 
 class Role(str, Enum):
     CUSTOMER = "CUSTOMER"
@@ -135,3 +134,65 @@ class Coupon:
             discount = self.discount_value
         # The final total must never be negative
         return min(discount, order_total)
+    
+
+class OrderStatus(str, Enum):
+    PENDING = "PENDING"
+    CONFIRMED = "CONFIRMED"
+    PROCESSING = "PROCESSING"
+    SHIPPED = "SHIPPED"
+    DELIVERED = "DELIVERED"
+    CANCELLED = "CANCELLED"
+
+
+# Which status may follow which. A delivered order can never be cancelled.
+ALLOWED_TRANSITIONS: dict[OrderStatus, set[OrderStatus]] = {
+    OrderStatus.PENDING: {OrderStatus.CONFIRMED, OrderStatus.CANCELLED},
+    OrderStatus.CONFIRMED: {OrderStatus.PROCESSING, OrderStatus.CANCELLED},
+    OrderStatus.PROCESSING: {OrderStatus.SHIPPED, OrderStatus.CANCELLED},
+    OrderStatus.SHIPPED: {OrderStatus.DELIVERED},
+    OrderStatus.DELIVERED: set(),
+    OrderStatus.CANCELLED: set(),
+}
+
+# Customers may only cancel before processing starts
+CUSTOMER_CANCELLABLE = {OrderStatus.PENDING, OrderStatus.CONFIRMED}
+
+
+@dataclass
+class OrderItem:
+    product_id: int
+    product_name: str  # snapshot at purchase time
+    unit_price: Decimal  # snapshot at purchase time
+    quantity: int
+
+    @property
+    def line_total(self) -> Decimal:
+        return self.unit_price * self.quantity
+
+
+@dataclass
+class Order:
+    id: int | None
+    user_id: int
+    items: list[OrderItem]
+    subtotal: Decimal
+    discount: Decimal
+    total: Decimal
+    status: OrderStatus = OrderStatus.PENDING
+    coupon_code: str | None = None
+    created_at: datetime | None = None
+
+    def __post_init__(self):
+        if self.total < 0:
+            raise InvalidData("Order total cannot be negative")
+
+    def ensure_transition(self, new_status: OrderStatus) -> None:
+        if new_status not in ALLOWED_TRANSITIONS[self.status]:
+            raise InvalidStatusTransition(
+                f"Cannot change order status from {self.status.value} to {new_status.value}"
+            )
+
+    def ensure_customer_can_cancel(self) -> None:
+        if self.status not in CUSTOMER_CANCELLABLE:
+            raise InvalidStatusTransition(f"An order that is {self.status.value} cannot be cancelled")
