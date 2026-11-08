@@ -8,7 +8,7 @@ from app.domain.entities import Cart, Coupon, Order, OrderItem, OrderStatus, Pay
 from app.domain.repositories import OrderRepository
 from app.infrastructure.models import (
     CartItemModel, CartModel, CouponModel, CouponUsageModel, IdempotencyKeyModel,
-    OrderItemModel, OrderModel, ProductModel,
+    OrderItemModel, OrderModel, PaymentModel, ProductModel,
 )
 from app.infrastructure.repositories.cart_repository import SqlAlchemyCartRepository
 from app.infrastructure.repositories.coupon_repository import SqlAlchemyCouponRepository
