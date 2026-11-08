@@ -14,6 +14,7 @@ from app.infrastructure.repositories.coupon_repository import SqlAlchemyCouponRe
 from app.infrastructure.repositories.order_repository import (
     SqlAlchemyOrderRepository, SqlAlchemyOrderUnitOfWork,
 )
+from app.infrastructure.repositories.payment_repository import SqlAlchemyPaymentRepository
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -49,6 +50,9 @@ def get_order_repo(db: Session = Depends(get_db)) -> SqlAlchemyOrderRepository:
 
 def get_order_uow(db: Session = Depends(get_db)) -> SqlAlchemyOrderUnitOfWork:
     return SqlAlchemyOrderUnitOfWork(db)
+
+def get_payment_repo(db: Session = Depends(get_db)) -> SqlAlchemyPaymentRepository:
+    return SqlAlchemyPaymentRepository(db)
 
 def get_hasher() -> BcryptPasswordHasher:
     return BcryptPasswordHasher()

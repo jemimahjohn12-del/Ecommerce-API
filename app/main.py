@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.domain import exceptions as errors
-from app.presentation.routes import auth, cart, categories, coupons, orders, products
+from app.presentation.routes import auth, cart, categories, coupons, orders, payments, products
 
 app = FastAPI(title="E-Commerce & Order Management API")
 
@@ -34,6 +34,7 @@ app.include_router(products.router)
 app.include_router(cart.router)
 app.include_router(coupons.router)
 app.include_router(orders.router)
+app.include_router(payments.router)
 
 
 @app.get("/", tags=["Health"])

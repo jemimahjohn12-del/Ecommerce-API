@@ -2,7 +2,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from decimal import Decimal
 
-from app.domain.entities import Cart, Category, Coupon, Order, OrderStatus, Product, User
+from app.domain.entities import (
+    Cart, Category, Coupon, Order, OrderStatus, Payment, PaymentStatus, Product, User,
+)
 
 
 class UserRepository(ABC):
@@ -119,3 +121,26 @@ class OrderRepository(ABC):
     def list_all(
         self, status: OrderStatus | None, page: int, page_size: int
     ) -> tuple[list[Order], int]: ...
+    
+
+class PaymentRepository(ABC):
+    @abstractmethod
+    def get_by_id(self, payment_id: int) -> Payment | None: ...
+
+    @abstractmethod
+    def get_latest_for_order(self, order_id: int) -> Payment | None: ...
+
+    @abstractmethod
+    def list_for_order(self, order_id: int) -> list[Payment]:
+        """All submissions for an order, newest first."""
+
+    @abstractmethod
+    def list_all(
+        self, status: PaymentStatus | None, page: int, page_size: int
+    ) -> tuple[list[Payment], int]: ...
+
+    @abstractmethod
+    def add(self, payment: Payment, receipt: bytes) -> Payment: ...
+
+    @abstractmethod
+    def get_receipt(self, payment_id: int) -> bytes | None: ...

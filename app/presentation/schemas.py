@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
-from app.domain.entities import DiscountType, OrderStatus
+from app.domain.entities import DiscountType, OrderStatus, PaymentStatus
 
 # ---------- Auth ----------
 class RegisterRequest(BaseModel):
@@ -218,3 +218,43 @@ class PaginatedOrders(BaseModel):
 
 class UpdateOrderStatusRequest(BaseModel):
     status: OrderStatus
+
+    
+
+# ---------- Payments ----------
+class PaymentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    order_id: int
+    user_id: int
+    amount: Decimal
+    status: PaymentStatus
+    rejection_reason: str | None
+    submitted_at: datetime
+    reviewed_by: int | None
+    reviewed_at: datetime | None
+
+
+class OrderPaymentResponse(BaseModel):
+    order_id: int
+    amount_due: Decimal
+    status: PaymentStatus
+    payments: list[PaymentResponse]
+
+
+class PaymentDetailResponse(BaseModel):
+    payment: PaymentResponse
+    order: OrderResponse
+
+
+class PaginatedPayments(BaseModel):
+    items: list[PaymentResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+class RejectPaymentRequest(BaseModel):
+    reason: str = Field(min_length=3, max_length=500)

@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 
 from app.application.interfaces import OrderUnitOfWork
-from app.domain.entities import Order, OrderItem, OrderStatus
+from app.domain.entities import Order, OrderItem, OrderStatus, PaymentStatus
 from app.domain.exceptions import CouponNotValid, InsufficientStock, InvalidData, NotFound
 from app.domain.repositories import OrderRepository
 
@@ -114,6 +114,12 @@ class UpdateOrderStatus:
             if not order:
                 raise NotFound("Order not found")
             order.ensure_transition(new_status)
+            if (
+                new_status == OrderStatus.PROCESSING
+                and self.uow.get_payment_status(order.id) != PaymentStatus.APPROVED
+            ):
+                raise InvalidData("Payment must be approved before the order can be processed")
+
             if new_status == OrderStatus.CANCELLED:
                 _cancel_and_restock(self.uow, order)
             else:

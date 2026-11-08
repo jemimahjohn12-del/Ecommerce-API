@@ -196,3 +196,30 @@ class Order:
     def ensure_customer_can_cancel(self) -> None:
         if self.status not in CUSTOMER_CANCELLABLE:
             raise InvalidStatusTransition(f"An order that is {self.status.value} cannot be cancelled")
+        
+
+class PaymentStatus(str, Enum):
+    NOT_SUBMITTED = "NOT_SUBMITTED"
+    UNDER_REVIEW = "UNDER_REVIEW"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
+
+@dataclass
+class Payment:
+    id: int | None
+    order_id: int
+    user_id: int
+    amount: Decimal
+    content_type: str
+    status: PaymentStatus = PaymentStatus.UNDER_REVIEW
+    rejection_reason: str | None = None
+    reviewed_by: int | None = None
+    reviewed_at: datetime | None = None
+    submitted_at: datetime | None = None
+
+    def ensure_reviewable(self) -> None:
+        if self.status != PaymentStatus.UNDER_REVIEW:
+            raise InvalidStatusTransition(
+                "Only a payment that is under review can be approved or rejected"
+            )

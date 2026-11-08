@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from app.domain.entities import Cart, Coupon, Order, OrderStatus
+from app.domain.entities import Cart, Coupon, Order, OrderStatus, Payment, PaymentStatus
 
 class PasswordHasher(ABC):
     @abstractmethod
@@ -58,3 +58,14 @@ class OrderUnitOfWork(ABC):
 
     @abstractmethod
     def rollback(self) -> None: ...
+    
+    @abstractmethod
+    def get_payment_status(self, order_id: int) -> PaymentStatus: ...
+
+    @abstractmethod
+    def lock_payment(self, payment_id: int) -> Payment | None: ...
+
+    @abstractmethod
+    def set_payment_review(
+        self, payment_id: int, status: PaymentStatus, reviewed_by: int, reason: str | None
+    ) -> None: ...

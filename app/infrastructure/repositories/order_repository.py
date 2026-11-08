@@ -4,7 +4,7 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session
 
 from app.application.interfaces import OrderUnitOfWork
-from app.domain.entities import Cart, Coupon, Order, OrderItem, OrderStatus
+from app.domain.entities import Cart, Coupon, Order, OrderItem, OrderStatus, Payment, PaymentStatus
 from app.domain.repositories import OrderRepository
 from app.infrastructure.models import (
     CartItemModel, CartModel, CouponModel, CouponUsageModel, IdempotencyKeyModel,
@@ -12,6 +12,7 @@ from app.infrastructure.models import (
 )
 from app.infrastructure.repositories.cart_repository import SqlAlchemyCartRepository
 from app.infrastructure.repositories.coupon_repository import SqlAlchemyCouponRepository
+from app.infrastructure.repositories.payment_repository import SqlAlchemyPaymentRepository
 
 
 def _to_orders(db: Session, models: list[OrderModel]) -> list[Order]:
@@ -156,3 +157,33 @@ class SqlAlchemyOrderUnitOfWork(OrderUnitOfWork):
 
     def rollback(self) -> None:
         self.db.rollback()
+
+
+
+        
+    def get_payment_status(self, order_id: int) -> PaymentStatus:
+        status = self.db.scalar(
+            select(PaymentModel.status)
+            .where(PaymentModel.order_id == order_id)
+            .order_by(PaymentModel.id.desc())
+            .limit(1)
+        )
+        return PaymentStatus(status) if status else PaymentStatus.NOT_SUBMITTED
+
+    def lock_payment(self, payment_id: int) -> Payment | None:
+        m = self.db.scalar(
+            select(PaymentModel).where(PaymentModel.id == payment_id).with_for_update()
+        )
+        return SqlAlchemyPaymentRepository._to_entity(m) if m else None
+
+    def set_payment_review(
+        self, payment_id: int, status: PaymentStatus, reviewed_by: int, reason: str | None
+    ) -> None:
+        self.db.execute(
+            update(PaymentModel)
+            .where(PaymentModel.id == payment_id)
+            .values(
+                status=status.value, reviewed_by=reviewed_by,
+                reviewed_at=func.now(), rejection_reason=reason,
+            )
+        )
