@@ -3,4 +3,5 @@ __pycache__/
 .env
 uploads/
 *.pyc
+.postman/
 postman/globals/
